@@ -88,3 +88,45 @@ function find {
     }
 }
 
+# search through bing and list the first 10 search results 
+function search {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$query,
+        
+        [int]$count = 10  # Number of search results to retrieve
+    )
+
+     $urlEncodedQuery = [uri]::EscapeDataString($query)
+     $url = "https://www.bing.com/search?q=$urlEncodedQuery"
+
+     $response = Invoke-WebRequest -Uri $url -UseBasicParsing
+     $htmlContent = $response.Content
+
+     # Extract search results using regular expressions
+     $regex = '<h2.*?>(.*?)<\/h2>'
+     $matches_arr = [regex]::Matches($htmlContent, $regex)
+     # Output search results
+     $resultCount = 10#[Math]::Min($count, $matches_arr.Count)
+	 if ($matches_arr.Count -lt $resultCount){$resultCount=$matches_arr.Count}
+		
+     for ($i = 0; $i -lt $resultCount; $i++) {
+         $htmlString = $matches_arr[$i].Groups[1].Value
+		 
+		 # Regular expression pattern to extract the link text and URL
+		 $pattern = '<a\s+[^>]*?href="([^"]*)"[^>]*?>(.*?)<\/a>'
+		 # Extract link text and URL using regex
+		if ($htmlString -match $pattern) {
+			$linkURL = $matches[1]
+			$linkText = $matches[2]
+			
+			
+			# Display the link neatly
+			Write-Host "$($i + 1).`nLink Text:`t$linkText`nLink URL:`t$linkURL`n"
+		} else {
+			Write-Host "No link found."
+		}
+     }
+ }
+
+
