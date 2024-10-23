@@ -2,7 +2,7 @@
 
 
 # Instructions 
-1) open a powershell (click windows button and write powershell)
+1) Open a powershell (click windows button and write powershell)
 
 2) Copy and paste the below comamnds to make a profile
 ``` ps1
