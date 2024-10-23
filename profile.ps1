@@ -129,4 +129,58 @@ function search {
      }
  }
 
+# Find a keywork in a directory full of excel files 
 
+function find_file {
+    param (
+        [string]$PathToFolder,   # Path to the folder containing Excel files
+        [string]$Keyword         # Keyword to search for in the Excel files
+    )
+
+    # Get all the Excel files in the folder
+    $excelFiles = Get-ChildItem -Path $PathToFolder -Filter *.csv
+
+    # Loop through each Excel file and check for the keyword
+    foreach ($file in $excelFiles) {
+        $filePath = Join-Path $PathToFolder $file.Name
+        
+        # Load Excel COM object
+        $excel = New-Object -ComObject Excel.Application
+        $excel.Visible = $false
+        $excel.DisplayAlerts = $false
+        
+        # Open the workbook
+        $workbook = $excel.Workbooks.Open($filePath)
+        
+        # Loop through each worksheet in the workbook
+        $found = $false
+        foreach ($sheet in $workbook.Sheets) {
+            $usedRange = $sheet.UsedRange.Value2
+            
+            # Search for the keyword in the used range of the worksheet
+            foreach ($row in $usedRange) {
+                if ($row -contains $Keyword) {
+                    Write-Output "Found '$Keyword' in file: $file.Name"
+                    $found = $true
+                    break
+                }
+            }
+            
+            if ($found) {
+                break
+            }
+        }
+        
+        # Close the workbook
+        $workbook.Close($false)
+        $excel.Quit()
+        [System.Runtime.Interopservices.Marshal]::ReleaseComObject($excel) | Out-Null
+        
+        if ($found) {
+            return $file.Name  # Return the file name if found
+        }
+    }
+
+    Write-Output "No files contain the keyword '$Keyword'."
+    return $null
+}
